@@ -9,12 +9,13 @@ public class TestValue
 public class TestValueException : Exception
 {
     public StackTrace RootStackTrace { get; private set; } = new(true);
+
     public class SomeInvalidStateException : TestValueException {}
     public class NullValueException : TestValueException {}
     public class IOException : TestValueException {}
 }
 
-public class ResultsTests
+public class ResTests
 {
     [SetUp]
     public void Setup()
