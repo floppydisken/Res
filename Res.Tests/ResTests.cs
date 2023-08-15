@@ -6,13 +6,13 @@ public class TestValue
 {
 }
 
-public class TestValueException : Exception
+public class ResException : Exception
 {
     public StackTrace RootStackTrace { get; private set; } = new(true);
 
-    public class SomeInvalidStateException : TestValueException {}
-    public class NullValueException : TestValueException {}
-    public class IOException : TestValueException {}
+    public class InvalidStateException : ResException {}
+    public class NullValueException : ResException {}
+    public class IOException : ResException {}
 }
 
 public class ResTests
@@ -26,26 +26,26 @@ public class ResTests
     public void ProperlyResolvesToError()
     {
         
-        IRes<TestValue, TestValueException> SomeOk()
+        IRes<TestValue, ResException> SomeOk()
         {
-            return Res.Ok<TestValue, TestValueException>(new TestValue());
+            return Res.Ok<TestValue, ResException>(new TestValue());
         }
         
-        IRes<TestValue, TestValueException> SomeError()
+        IRes<TestValue, ResException> SomeError()
         {
-            return Res.Err<TestValue, TestValueException>(new TestValueException.IOException());
+            return Res.Err<TestValue, ResException>(new ResException.IOException());
         }
 
         var result = SomeError();
 
         var res = result switch
         {
-            Ok<TestValue, TestValueException> ok => ok.Unwrap().ToString(),
-            Err<TestValue, TestValueException> err => err.Error switch
+            Ok<TestValue, ResException> ok => ok.Unwrap().ToString(),
+            Err<TestValue, ResException> err => err.Error switch
             {
-                TestValueException.IOException => "",
-                TestValueException.NullValueException => "",
-                TestValueException.SomeInvalidStateException => "",
+                ResException.IOException => "",
+                ResException.NullValueException => "",
+                ResException.SomeInvalidStateException => "",
             },
             _ => throw new ArgumentOutOfRangeException()
         };
