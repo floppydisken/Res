@@ -11,7 +11,7 @@ public class Res
     {
         return new Ok<T, TError>(value);
     }
-
+    
     public static Err<T, TError> Err<T, TError>(TError error) where TError : Exception
     {
         return new Err<T, TError>(error);

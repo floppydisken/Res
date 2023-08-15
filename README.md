@@ -69,6 +69,8 @@ catch (Exception e)
 
 The advantage of this approach is to make it obvious what is missing when writing code.
 
+Also it's now obvious what possible return values there are. Even though we don't get something as great as discriminated unions, polymorphism almost gives us the same guarentees. It is now APART OF THE API which is wonderful.
+
 # Strict mode
 
 Taking inspiration from https://github.com/SteveDunn/Vogen (or https://github.com/SteveDunn/Vogen/blob/main/src/Vogen/CompilationExtensions.cs) we could probably ensure compile time exceptions for unhandled cases. We're returning to the Java-esque forced throw handlers, which is a bit ironic, but man does it make sense when you're building a big project and want guarentees and transparency.

@@ -25,27 +25,28 @@ public class ResTests
     [Test]
     public void ProperlyResolvesToError()
     {
-        
         IRes<TestValue, ResException> SomeOk()
         {
             return Res.Ok<TestValue, ResException>(new TestValue());
         }
-        
+
         IRes<TestValue, ResException> SomeError()
         {
             return Res.Err<TestValue, ResException>(new ResException.IOException());
         }
 
-        var result = SomeError();
+        IRes<TestValue, ResException> result = SomeError();
 
-        var res = result switch
+        string res = result switch
         {
-            Ok<TestValue, ResException> ok => ok.Unwrap().ToString(),
+            Ok<TestValue, ResException> ok => ok.Unwrap().ToString() ?? "",
             Err<TestValue, ResException> err => err.Error switch
             {
                 ResException.IOException => "",
                 ResException.NullValueException => "",
-                ResException.SomeInvalidStateException => "",
+                ResException.InvalidStateException invalidStateException => throw new NotImplementedException(),
+                //ResException.InvalidStateException => "",
+                //_ => "",
             },
             _ => throw new ArgumentOutOfRangeException()
         };
