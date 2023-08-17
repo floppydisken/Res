@@ -1,24 +1,58 @@
-﻿namespace Results;
+﻿using System.Diagnostics;
+using System.Runtime.Serialization;
+
+namespace Res;
 
 public class NullValueException : Exception
 {
     public NullValueException(Type t) : base($"Result with {t.Name} is null") { }
 }
 
+public class PanicException : Exception
+{
+    public StackTrace RootStackTrace = new();
+
+    public PanicException()
+    {
+    }
+
+    protected PanicException(SerializationInfo info, StreamingContext context) : base(info, context)
+    {
+    }
+
+    public PanicException(string? message) : base(message)
+    {
+    }
+
+    public PanicException(string? message, Exception? innerException) : base(message, innerException)
+    {
+    }
+}
+
 public class Res
 {
-    public static Ok<T, TError> Ok<T, TError>(T value) where TError : Exception
+    public static Ok<T, TError> Ok<T, TError>(T value) where TError : PanicException
     {
         return new Ok<T, TError>(value);
     }
     
-    public static Err<T, TError> Err<T, TError>(TError error) where TError : Exception
+    public static Ok<T, Exception> Ok<T>(T value)
+    {
+        return new Ok<T, Exception>(value);
+    }
+    
+    public static Err<T, TError> Err<T, TError>(TError error) where TError : PanicException
     {
         return new Err<T, TError>(error);
     }
+    
+    // public static Err<T, TError> Err<T, TError>(TError error) where TError : Exception
+    // {
+    //     return new Err<T, TError>(error);
+    // }
 }
 
-public interface IRes<T, TErr> where TErr : Exception
+public interface IRes<out T, in TErr> where TErr : Exception
 {
     public T Unwrap();
 }

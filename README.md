@@ -74,3 +74,22 @@ Also it's now obvious what possible return values there are. Even though we don'
 # Strict mode
 
 Taking inspiration from https://github.com/SteveDunn/Vogen (or https://github.com/SteveDunn/Vogen/blob/main/src/Vogen/CompilationExtensions.cs) we could probably ensure compile time exceptions for unhandled cases. We're returning to the Java-esque forced throw handlers, which is a bit ironic, but man does it make sense when you're building a big project and want guarentees and transparency.
+
+OMG, great news. Found this gem of a library https://github.com/WalkerCodeRanger/ExhaustiveMatching which now means we can do this.
+
+```csharp
+var result = someInstance.DoSomethingAndGibResult();
+
+var unwrapped = result switch
+{
+    Ok<TestValue, ResException> ok => ok.Unwrap().ToString(),
+    Err<TestValue, ResException> err => err.Error switch // <- Red squiglies and compilation fails.
+    {
+        ResException.IOException => "I'm so handling this IOException.",
+        ResException.NullValueException => "Oh noo, the billion dollar mistake.",
+        // ResException.SomeInvalidStateException => "Yeesh, you really messed up there chief.",
+        _ => ExhaustiveMatch.Failed("Oh boy. How did I miss this?"),
+    },
+    _ => throw new PanicAtTheDiscoException()
+};
+```
