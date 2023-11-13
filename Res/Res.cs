@@ -31,14 +31,14 @@ public static class Res
         return new Ok<T, TError>(value);
     }
     
-    public static Ok<T, Exception> Ok<T>(T value)
+    public static Ok<T, Panic> Ok<T>(T value)
     {
-        return new Ok<T, Exception>(value);
+        return new Ok<T, Panic>(value);
     }
 
-    public static Ok<T, Exception> ToOk<T>(this T value)
+    public static Ok<T, Panic> ToOk<T>(this T value)
     {
-        return new Ok<T, Exception>(value);
+        return new Ok<T, Panic>(value);
     }
     
     public static Err<T, TError> Err<T, TError>(TError error) where TError : Panic
@@ -46,9 +46,9 @@ public static class Res
         return new Err<T, TError>(error);
     }
 
-    public static Err<T, Exception> ToErr<T>(this Exception error)
+    public static Err<T, Panic> ToErr<T>(this Panic error)
     {
-        return new Err<T, Exception>(error);
+        return new Err<T, Panic>(error);
     }
     
     // public static Err<T, TError> Err<T, TError>(TError error) where TError : Exception

@@ -44,26 +44,32 @@ public class ResTests
         IRes<TestValue, ResPanic> SomeError2()
         {
             return new ResPanic.IoPanic().ToErr<TestValue>();
-            //return Res.Err<TestValue, ResException>(new ResException.IOException());
         }
 
         IRes<TestValue, ResPanic> result = SomeError();
         var res2 = SomeError();
         var v = res2.UnwrapOr(new TestValue());
 
-        string res = result switch
+        try
         {
-            Ok<TestValue, ResPanic> ok => ok.Unwrap().ToString() ?? "",
-            Err<TestValue, ResPanic> err => err.Error switch
+            string res = result switch
             {
-                ResPanic.IoPanic e => throw e,
-                ResPanic.NullValuePanic e => e.Message,
-                ResPanic.InvalidStatePanic e => e.Message,
-                // ResException e => throw ExhaustiveMatch.Failed(""),
-                _ => throw ExhaustiveMatch.Failed(""),
-            },
-            _ => throw new ArgumentOutOfRangeException()
-        };
+                Ok<TestValue, ResPanic> ok => ok.Unwrap().ToString() ?? "",
+                Err<TestValue, ResPanic> err => err.Error switch
+                {
+                    ResPanic.IoPanic e => throw e,
+                    ResPanic.NullValuePanic e => e.Message,
+                    ResPanic.InvalidStatePanic e => e.Message,
+                    // ResException e => throw ExhaustiveMatch.Failed(""),
+                    _ => throw ExhaustiveMatch.Failed(""),
+                },
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
+        catch (Panic e)
+        {
+            Console.Write(e.RootStackTrace);
+        }
     }
 
     [Test]
