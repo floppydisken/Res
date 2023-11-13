@@ -25,7 +25,7 @@ public static class ResultService
 
 [ShortRunJob]
 [MemoryDiagnoser]
-public class Benchmarks
+public class ResWithExceptionBenchmarks
 {
     [Benchmark]
     public string RegularTryCatch()

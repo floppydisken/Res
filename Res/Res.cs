@@ -24,6 +24,10 @@ public class Panic : Exception
     }
 }
 
+public class Error
+{
+}
+
 public static class Res
 {
     public static Ok<T, TError> Ok<T, TError>(T value) where TError : Panic
