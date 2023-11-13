@@ -3,35 +3,30 @@ using System.Runtime.Serialization;
 
 namespace Res;
 
-public class NullValueException : Exception
-{
-    public NullValueException(Type t) : base($"Result with {t.Name} is null") { }
-}
-
-public class PanicException : Exception
+public class Panic : Exception
 {
     public StackTrace RootStackTrace = new();
 
-    public PanicException()
+    public Panic()
     {
     }
 
-    protected PanicException(SerializationInfo info, StreamingContext context) : base(info, context)
+    protected Panic(SerializationInfo info, StreamingContext context) : base(info, context)
     {
     }
 
-    public PanicException(string? message) : base(message)
+    public Panic(string? message) : base(message)
     {
     }
 
-    public PanicException(string? message, Exception? innerException) : base(message, innerException)
+    public Panic(string? message, Exception? innerException) : base(message, innerException)
     {
     }
 }
 
-public class Res
+public static class Res
 {
-    public static Ok<T, TError> Ok<T, TError>(T value) where TError : PanicException
+    public static Ok<T, TError> Ok<T, TError>(T value) where TError : Panic
     {
         return new Ok<T, TError>(value);
     }
@@ -40,10 +35,20 @@ public class Res
     {
         return new Ok<T, Exception>(value);
     }
+
+    public static Ok<T, Exception> ToOk<T>(this T value)
+    {
+        return new Ok<T, Exception>(value);
+    }
     
-    public static Err<T, TError> Err<T, TError>(TError error) where TError : PanicException
+    public static Err<T, TError> Err<T, TError>(TError error) where TError : Panic
     {
         return new Err<T, TError>(error);
+    }
+
+    public static Err<T, Exception> ToErr<T>(this Exception error)
+    {
+        return new Err<T, Exception>(error);
     }
     
     // public static Err<T, TError> Err<T, TError>(TError error) where TError : Exception
@@ -52,12 +57,13 @@ public class Res
     // }
 }
 
-public interface IRes<out T, in TErr> where TErr : Exception
+public interface IRes<T, in TErr> where TErr : Exception
 {
     public T Unwrap();
+    public T UnwrapOr(T t);
 }
 
-public class Err<T, TErr> : Res, IRes<T, TErr> where TErr : Exception
+public class Err<T, TErr> : IRes<T, TErr> where TErr : Exception
 {
     private readonly TErr error;
     public TErr Error => error;
@@ -65,6 +71,9 @@ public class Err<T, TErr> : Res, IRes<T, TErr> where TErr : Exception
     public Err(TErr error) => this.error = error;
 
     public T Unwrap() => throw this.error;
+
+    public T UnwrapOr(T or)
+        => or;
 }
 
 // public class Ok<T, TErr> : Res, IRes<T, TErr> where TErr : Exception
@@ -82,7 +91,7 @@ public class Err<T, TErr> : Res, IRes<T, TErr> where TErr : Exception
 //     }
 // }
 
-public class Ok<T, TError> : Res, IRes<T, TError> where TError : Exception
+public class Ok<T, TError> : IRes<T, TError> where TError : Exception
 {
     private readonly T t;
 
@@ -93,6 +102,9 @@ public class Ok<T, TError> : Res, IRes<T, TError> where TError : Exception
 
     public T Unwrap()
     {
-        throw new NotImplementedException();
+        return t;
     }
+
+    public T UnwrapOr(T or)
+        => t is null ? or : t;
 }
