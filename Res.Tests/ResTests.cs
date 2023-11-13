@@ -28,7 +28,7 @@ public class ResTests
     {
         IRes<TestValue, ResPanic> SomeOk()
         {
-            return global::Res.Res.Ok(new TestValue());
+            return Res.Ok(new TestValue());
         }
 
         IRes<TestValue, ResPanic> SomeOk2()
