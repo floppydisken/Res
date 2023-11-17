@@ -5,16 +5,13 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Res.Benchmarks</RootNamespace>
-        <AssemblyName>Res.Benchmarks</AssemblyName>
+        <RootNamespace>ResBenchmarks</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="BenchmarkDotNet" Version="0.13.10" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Res.Tests\Res.Tests.csproj" />
+      <PackageReference Include="CSharpFunctionalExtensions" Version="2.40.3" />
+      <PackageReference Include="FluentResults" Version="3.15.2" />
     </ItemGroup>
 
     <ItemGroup>
