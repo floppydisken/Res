@@ -6,15 +6,15 @@ namespace Res.Benchmarks;
 
 public static class ResultService
 {
-    public static IRes<TestValue, ResPanic> Result()
+    public static Res<TestValue, TestResError> Result()
     {
          // Do something
-         return Res.Ok<TestValue, ResPanic>(new TestValue());
+         return Res.Ok<TestValue, TestResError>(new TestValue());
     }
 
-    public static IRes<TestValue, ResPanic> Error()
+    public static Res<TestValue, TestResError> Error()
     {
-        return Res.Err<TestValue, ResPanic>(new ResPanic.IoPanic());
+        return Res.Err<TestValue, TestResError>(new TestResError.IoError(IoErrorType.FileSystem));
     }
 
     public static string Throws()
@@ -48,12 +48,12 @@ public class ResWithExceptionBenchmarks
      
          string res = result switch
          {
-             Ok<TestValue, ResPanic> ok => ok.Unwrap().ToString() ?? "",
-             Err<TestValue, ResPanic> err => err.Error switch
+             Ok<TestValue, TestResError> ok => ok.Unwrap().ToString() ?? "",
+             Err<TestValue, TestResError> err => err.UnwrapError() switch
              {
-                 ResPanic.IoPanic e => e.Message,
-                 ResPanic.NullValuePanic e => e.Message,
-                 ResPanic.InvalidStatePanic e => e.Message,
+                 TestResError.IoError e => e.ToString(),
+                 TestResError.NullValueError e => e.ToString(),
+                 TestResError.InvalidStateError e => e.ToString(),
                  _ => throw ExhaustiveMatch.Failed(""),
              },
              _ => throw new ArgumentOutOfRangeException()
@@ -69,12 +69,12 @@ public class ResWithExceptionBenchmarks
 
          string res = result switch
          {
-             Ok<TestValue, ResPanic> ok => ok.Unwrap().ToString() ?? "",
-             Err<TestValue, ResPanic> err => err.Error switch
+             Ok<TestValue, TestResError> ok => ok.Unwrap().ToString() ?? "",
+             Err<TestValue, TestResError> err => err.UnwrapError() switch
              {
-                 ResPanic.IoPanic e => throw e,
-                 ResPanic.NullValuePanic e => e.Message,
-                 ResPanic.InvalidStatePanic e => e.Message,
+                 TestResError.IoError e => throw new Exception(),
+                 TestResError.NullValueError e => e.ToString(),
+                 TestResError.InvalidStateError e => e.ToString(),
                  _ => throw ExhaustiveMatch.Failed(""),
              },
              _ => throw new ArgumentOutOfRangeException()

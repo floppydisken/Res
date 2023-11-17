@@ -1,32 +1,34 @@
 namespace Res;
 
-public interface IError
+public interface IError<out TError> where TError : Enum
 {
-    public string Reason { get; }
+    public TError Error { get; }
+    public string Reason { get; } // could be any object really
 }
 
-public class BasicResException<TErr> : Exception
+public record Error<TErrorCode>(TErrorCode ErrorCode, object ErrorValue);
+
+public class EnumResException<TErr> : Exception
 {
     public TErr Error { get; set; }
 
-    public BasicResException(TErr err)
+    public EnumResException(TErr err)
     {
         Error = err;
     }
 }
 
-
-public enum UnwrapType
+public enum EnumResErrors
 {
-    Err,
-    Ok
+    CannotUnwrap
 }
 
-public class Errors
+public class EnumErrors
 {
-    public sealed class CannotUnwrapError : Errors, IError
+    public sealed class CannotUnwrapError : Errors, IError<EnumResErrors>
     {
         public string Reason { get; }
+        public EnumResErrors Error { get; } = EnumResErrors.CannotUnwrap;
 
         public CannotUnwrapError(Type resultType, UnwrapType unwrapType)
         {
@@ -36,17 +38,17 @@ public class Errors
 }
 
 
-public abstract record BasicRes<T, TErr>
+public abstract record EnumRes<T, TErr>
 {
     public abstract T Unwrap();
     public abstract T UnwrapOr(T other);
     public abstract TErr UnwrapError();
 }
 
-public sealed record BasicOk<T, TErr> : BasicRes<T, TErr> 
+public sealed record EnumOk<T, TErr> : EnumRes<T, TErr> 
 {
     private readonly T value;
-    public BasicOk(T value)
+    public EnumOk(T value)
     {
         this.value = value;
     }
@@ -67,11 +69,11 @@ public sealed record BasicOk<T, TErr> : BasicRes<T, TErr>
     }
 }
 
-public sealed record BasicErr<T, TErr> : BasicRes<T, TErr>
+public sealed record EnumErr<T, TErr> : BasicRes<T, TErr>
 {
     private readonly TErr error;
 
-    public BasicErr(TErr error)
+    public EnumErr(TErr error)
     {
         this.error = error;
     }
@@ -95,7 +97,7 @@ public sealed record BasicErr<T, TErr> : BasicRes<T, TErr>
 /// <summary>
 /// Contains all of the factory methods for easy DX
 /// </summary>
-public static class BasicRes
+public static class EnumRes
 {
     public static BasicRes<T, TErr> Ok<T, TErr>(T value)
     {

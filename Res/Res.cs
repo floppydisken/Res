@@ -3,112 +3,109 @@ using System.Runtime.Serialization;
 
 namespace Res;
 
-public class Panic : Exception
+
+public class UnwrapException : Exception
 {
-    public StackTrace RootStackTrace = new();
-
-    public Panic()
-    {
-    }
-
-    protected Panic(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
-
-    public Panic(string? message) : base(message)
-    {
-    }
-
-    public Panic(string? message, Exception? innerException) : base(message, innerException)
-    {
-    }
 }
 
-public class Error
+public class UnknownErrorException : Exception
 {
+    private readonly object _error;
+
+    public UnknownErrorException(object error)
+        : base($"Failed to handle error with value '${error}'")
+    {
+        _error = error;
+    }
 }
 
 public static class Res
 {
-    public static Ok<T, TError> Ok<T, TError>(T value) where TError : Panic
-    {
-        return new Ok<T, TError>(value);
-    }
-    
-    public static Ok<T, Panic> Ok<T>(T value)
-    {
-        return new Ok<T, Panic>(value);
-    }
+    public static Ok<T, TError> Ok<T, TError>(T value)
+        => new(value);
+ 
+    public static Ok<T, object> ToOk<T>(this T value)
+        => Ok<T, object>(value);
 
-    public static Ok<T, Panic> ToOk<T>(this T value)
-    {
-        return new Ok<T, Panic>(value);
-    }
-    
-    public static Err<T, TError> Err<T, TError>(TError error) where TError : Panic
-    {
-        return new Err<T, TError>(error);
-    }
+    public static Err<T, TError> Err<T, TError>(TError error)
+        => new (error);
 
-    public static Err<T, Panic> ToErr<T>(this Panic error)
-    {
-        return new Err<T, Panic>(error);
-    }
-    
-    // public static Err<T, TError> Err<T, TError>(TError error) where TError : Exception
-    // {
-    //     return new Err<T, TError>(error);
-    // }
+    /// <summary>
+    /// Be advised. Remember to pass in the generic if the type in the
+    /// final Res does not match directly or be pained by the compiler errors.
+    /// </summary>
+    /// <param name="error"></param>
+    /// <typeparam name="TError"></typeparam>
+    /// <returns></returns>
+    public static Err<object, TError> ToErr<TError>(this TError error)
+         => Err<object, TError>(error);
 }
 
-public interface IRes<T, in TErr> where TErr : Exception
+public abstract class Res<T, TErr>
 {
-    public T Unwrap();
-    public T UnwrapOr(T t);
+    public abstract bool IsError { get; }
+    public abstract bool IsOk { get; }
+    public abstract T Unwrap();
+    public abstract T UnwrapOr(T t);
+    public abstract TErr UnwrapError();
+    public abstract Res<T, RErr> MapError<RErr>(Func<TErr, RErr> mapper);
+    public abstract Res<R, TErr> Map<R>(Func<T, R> mapper);
+    public abstract Res<R, TErr> Bind<R>(Func<Res<T, TErr>, Res<R, TErr>> binder);
+
+    public static implicit operator Res<T, TErr>(Ok<T, object> r) 
+        => Res.Ok<T, TErr>(r.Unwrap());
+
+    public static implicit operator Res<T, TErr>(Err<object, TErr> r)
+        => Res.Err<T, TErr>(r.UnwrapError());
 }
 
-public class Err<T, TErr> : IRes<T, TErr> where TErr : Exception
+public sealed class Err<T, TErr> : Res<T, TErr>
 {
     private readonly TErr error;
-    public TErr Error => error;
+    public override bool IsError => true;
+    public override bool IsOk => false;
 
     public Err(TErr error) => this.error = error;
+    
+    public override T Unwrap() => throw new UnwrapException();
 
-    public T Unwrap() => throw this.error;
-
-    public T UnwrapOr(T or)
+    public override T UnwrapOr(T or)
         => or;
+
+    public override TErr UnwrapError()
+        => error;
+
+    public override Res<T, RErr> MapError<RErr>(Func<TErr, RErr> mapper)
+        => Res.Err<T, RErr>(mapper(error));
+
+    public override Res<R, TErr> Map<R>(Func<T, R> mapper)
+        => Res.Err<R, TErr>(error);
+
+    public override Res<R, TErr> Bind<R>(Func<Res<T, TErr>, Res<R, TErr>> binder)
+        => Res.Err<R, TErr>(error);
 }
 
-// public class Ok<T, TErr> : Res, IRes<T, TErr> where TErr : Exception
-// {
-//     private readonly T t;
-// 
-//     internal Ok(T t)
-//     {
-//         this.t = t;
-//     }
-// 
-//     public T Unwrap()
-//     {
-//         throw new NotImplementedException();
-//     }
-// }
-
-public class Ok<T, TError> : IRes<T, TError> where TError : Exception
+public sealed class Ok<T, TError> : Res<T, TError>
 {
+    public override bool IsError => false;
+    public override bool IsOk => true;
+ 
     private readonly T t;
 
-    internal Ok(T t)
-    {
-        this.t = t;
-    }
+    internal Ok(T t) => this.t = t;
+    
+    public override T Unwrap() => t;
 
-    public T Unwrap()
-    {
-        return t;
-    }
+    public override T UnwrapOr(T or) => t is null ? or : t;
 
-    public T UnwrapOr(T or)
-        => t is null ? or : t;
+    public override TError UnwrapError() => throw new UnwrapException();
+
+    public override Res<T, RErr> MapError<RErr>(Func<TError, RErr> mapper)
+        => t.ToOk();
+
+    public override Res<R, TError> Map<R>(Func<T, R> mapper)
+        => mapper(t).ToOk();
+
+    public override Res<R, TError> Bind<R>(Func<Res<T, TError>, Res<R, TError>> binder)
+        => binder(this);
 }
